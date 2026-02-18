@@ -4,10 +4,10 @@ Pharmalovo is a digital platform that revolutionizes medication access by connec
 
 ## Tech Stack
 
-- **Frontend:** Angular 17+
-- **Backend:** Spring Boot 3.x
+- **Frontend:** react
+- **Backend:** Spring Boot
 - **Database:** MySQL/PostgreSQL
-- **Security:** JWT Authentication, HTTPS
+- **Security:** JWT Authentication
 
 ## Prerequisites
 
