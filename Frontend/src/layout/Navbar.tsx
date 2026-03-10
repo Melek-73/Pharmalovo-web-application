@@ -1,33 +1,44 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Menu, X, Moon, Sun, Globe, Pill } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
-import { useTheme } from '../contexts/ThemeContext';
-import { Button } from '../components/Button';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Menu, X, Moon, Sun, Globe, Pill } from "lucide-react";
+import { useLanguage } from "../contexts/LanguageContext";
+import { useTheme } from "../contexts/ThemeContext";
+import { Button } from "../components/Button";
+import { useAuth } from "../contexts/AuthContext";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { language, setLanguage, t, isRTL } = useLanguage();
   const { isDark, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const navLinks = [
-    { path: '/', label: t.nav.home },
-    { path: '/about', label: t.nav.about },
-    { path: '/pharmacies', label: t.nav.pharmacies },
-    { path: '/search', label: t.nav.searchMeds },
-    { path: '/customers', label: t.nav.forCustomers },
-    { path: '/contact', label: t.nav.contact },
+    { path: "/", label: t.nav.home },
+    { path: "/about", label: t.nav.about },
+    { path: "/pharmacies", label: t.nav.pharmacies },
+    { path: "/search", label: t.nav.searchMeds },
+    { path: "/customers", label: t.nav.forCustomers },
+    { path: "/contact", label: t.nav.contact },
   ];
 
   const toggleLanguage = () => {
-    setLanguage(language === 'en' ? 'ar' : 'en');
+    setLanguage(language === "en" ? "ar" : "en");
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
   };
 
   return (
     <nav className="sticky top-0 z-50 bg-white dark:bg-gray-900 shadow-md transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link to="/" className="flex items-center space-x-2 rtl:space-x-reverse">
+          <Link
+            to="/"
+            className="flex items-center space-x-2 rtl:space-x-reverse"
+          >
             <Pill className="h-8 w-8 text-[#007BFF]" />
             <span className="text-xl font-bold text-gray-900 dark:text-white">
               Pharmalovo
@@ -66,19 +77,32 @@ export function Navbar() {
             >
               <Globe className="h-5 w-5 text-gray-700 dark:text-gray-300" />
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {language === 'en' ? 'AR' : 'EN'}
+                {language === "en" ? "AR" : "EN"}
               </span>
             </button>
 
-            <Link to="/login">
-              <Button variant="outline" size="sm">
-                {t.nav.login}
-              </Button>
-            </Link>
+            {user ? (
+              <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {user.name}
+                </span>
+                <Button variant="outline" size="sm" onClick={handleLogout}>
+                  {t.nav.logout}
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="outline" size="sm">
+                    {t.nav.login}
+                  </Button>
+                </Link>
 
-            <Link to="/register">
-              <Button size="sm">{t.nav.register}</Button>
-            </Link>
+                <Link to="/register">
+                  <Button size="sm">{t.nav.register}</Button>
+                </Link>
+              </>
+            )}
           </div>
 
           <button
@@ -132,21 +156,37 @@ export function Navbar() {
                 className="flex-1 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200 flex items-center justify-center space-x-2 rtl:space-x-reverse"
               >
                 <Globe className="h-5 w-5" />
-                <span>{language === 'en' ? 'عربي' : 'English'}</span>
+                <span>{language === "en" ? "عربي" : "English"}</span>
               </button>
             </div>
 
             <div className="flex flex-col space-y-2 pt-2">
-              <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                <Button variant="outline" size="md" fullWidth>
-                  {t.nav.login}
+              {user ? (
+                <Button
+                  variant="outline"
+                  size="md"
+                  fullWidth
+                  onClick={async () => {
+                    await handleLogout();
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  {t.nav.logout}
                 </Button>
-              </Link>
-              <Link to="/register" onClick={() => setIsMenuOpen(false)}>
-                <Button size="md" fullWidth>
-                  {t.nav.register}
-                </Button>
-              </Link>
+              ) : (
+                <>
+                  <Link to="/login" onClick={() => setIsMenuOpen(false)}>
+                    <Button variant="outline" size="md" fullWidth>
+                      {t.nav.login}
+                    </Button>
+                  </Link>
+                  <Link to="/register" onClick={() => setIsMenuOpen(false)}>
+                    <Button size="md" fullWidth>
+                      {t.nav.register}
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

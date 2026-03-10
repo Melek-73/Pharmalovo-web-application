@@ -1,35 +1,61 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Phone, MapPin, Eye, EyeOff } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
-import { Card } from '../components/Card';
-import { Button } from '../components/Button';
-import { Input } from '../components/Input';
-import { tunisiaGovernorates } from '../data/pharmacies';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Mail, Lock, User, Phone, MapPin, Eye, EyeOff } from "lucide-react";
+import { useLanguage } from "../contexts/LanguageContext";
+import { Card } from "../components/Card";
+import { Button } from "../components/Button";
+import { Input } from "../components/Input";
+import { tunisiaGovernorates } from "../data/pharmacies";
+import { useAuth } from "../contexts/AuthContext";
 
 export function Register() {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { register } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    location: '',
-    password: '',
-    confirmPassword: '',
-    userType: 'customer',
+    fullName: "",
+    email: "",
+    phone: "",
+    pharmacyName: "",
+    pharmacyAddress: "",
+    password: "",
+    confirmPassword: "",
+    userType: "customer",
     agreeToTerms: false,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+      setError("Passwords do not match!");
       return;
     }
-    navigate('/dashboard');
+    setIsSubmitting(true);
+    try {
+      const user = await register({
+        name: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        role: formData.userType === "pharmacy" ? "pharmacy_owner" : "customer",
+        pharmacyName:
+          formData.userType === "pharmacy" ? formData.pharmacyName : undefined,
+        pharmacyAddress:
+          formData.userType === "pharmacy"
+            ? formData.pharmacyAddress
+            : undefined,
+        phone: formData.userType === "pharmacy" ? formData.phone : undefined,
+      });
+      navigate(user.redirectPath, { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -46,25 +72,34 @@ export function Register() {
 
         <Card>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="rounded-lg bg-red-50 text-red-700 px-4 py-2 text-sm">
+                {error}
+              </div>
+            )}
             <div className="flex gap-4 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
               <button
                 type="button"
-                onClick={() => setFormData({ ...formData, userType: 'customer' })}
+                onClick={() =>
+                  setFormData({ ...formData, userType: "customer" })
+                }
                 className={`flex-1 py-2 px-4 rounded-md font-medium transition-all duration-200 ${
-                  formData.userType === 'customer'
-                    ? 'bg-white dark:bg-gray-900 text-[#007BFF] shadow'
-                    : 'text-gray-600 dark:text-gray-400'
+                  formData.userType === "customer"
+                    ? "bg-white dark:bg-gray-900 text-[#007BFF] shadow"
+                    : "text-gray-600 dark:text-gray-400"
                 }`}
               >
                 {t.auth.customer}
               </button>
               <button
                 type="button"
-                onClick={() => setFormData({ ...formData, userType: 'pharmacy' })}
+                onClick={() =>
+                  setFormData({ ...formData, userType: "pharmacy" })
+                }
                 className={`flex-1 py-2 px-4 rounded-md font-medium transition-all duration-200 ${
-                  formData.userType === 'pharmacy'
-                    ? 'bg-white dark:bg-gray-900 text-[#007BFF] shadow'
-                    : 'text-gray-600 dark:text-gray-400'
+                  formData.userType === "pharmacy"
+                    ? "bg-white dark:bg-gray-900 text-[#007BFF] shadow"
+                    : "text-gray-600 dark:text-gray-400"
                 }`}
               >
                 {t.auth.pharmacy}
@@ -76,7 +111,9 @@ export function Register() {
                 label={t.auth.fullName}
                 placeholder="Your full name"
                 value={formData.fullName}
-                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, fullName: e.target.value })
+                }
                 icon={<User className="h-5 w-5 text-gray-400" />}
                 required
               />
@@ -86,51 +123,77 @@ export function Register() {
                 label={t.auth.email}
                 placeholder="your.email@example.com"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 icon={<Mail className="h-5 w-5 text-gray-400" />}
                 required
               />
 
-              <Input
-                type="tel"
-                label={t.auth.phone}
-                placeholder="+216 XX XXX XXX"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                icon={<Phone className="h-5 w-5 text-gray-400" />}
-                required
-              />
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {t.auth.location}
-                </label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-                  <select
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#007BFF] focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+              {formData.userType === "pharmacy" && (
+                <>
+                  <Input
+                    label="Pharmacy name"
+                    placeholder="Pharmacy name"
+                    value={formData.pharmacyName}
+                    onChange={(e) =>
+                      setFormData({ ...formData, pharmacyName: e.target.value })
+                    }
+                    icon={<User className="h-5 w-5 text-gray-400" />}
                     required
-                  >
-                    <option value="">Select Governorate</option>
-                    {tunisiaGovernorates.map((gov) => (
-                      <option key={gov} value={gov}>
-                        {gov}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+                  />
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Pharmacy address
+                    </label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+                      <select
+                        value={formData.pharmacyAddress}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            pharmacyAddress: e.target.value,
+                          })
+                        }
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#007BFF] focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+                        required
+                      >
+                        <option value="">Select Governorate</option>
+                        {tunisiaGovernorates.map((gov) => (
+                          <option key={gov} value={gov}>
+                            {gov}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <Input
+                    type="tel"
+                    label={t.auth.phone}
+                    placeholder="+216 XX XXX XXX"
+                    value={formData.phone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
+                    icon={<Phone className="h-5 w-5 text-gray-400" />}
+                    required
+                  />
+                </>
+              )}
 
               <div>
                 <div className="relative">
                   <Input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     label={t.auth.password}
                     placeholder="Create a password"
                     value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
                     icon={<Lock className="h-5 w-5 text-gray-400" />}
                     required
                   />
@@ -151,12 +214,15 @@ export function Register() {
               <div>
                 <div className="relative">
                   <Input
-                    type={showConfirmPassword ? 'text' : 'password'}
+                    type={showConfirmPassword ? "text" : "password"}
                     label={t.auth.confirmPassword}
                     placeholder="Confirm your password"
                     value={formData.confirmPassword}
                     onChange={(e) =>
-                      setFormData({ ...formData, confirmPassword: e.target.value })
+                      setFormData({
+                        ...formData,
+                        confirmPassword: e.target.value,
+                      })
                     }
                     icon={<Lock className="h-5 w-5 text-gray-400" />}
                     required
@@ -180,24 +246,32 @@ export function Register() {
               <input
                 type="checkbox"
                 checked={formData.agreeToTerms}
-                onChange={(e) => setFormData({ ...formData, agreeToTerms: e.target.checked })}
+                onChange={(e) =>
+                  setFormData({ ...formData, agreeToTerms: e.target.checked })
+                }
                 className="mt-1 w-5 h-5 text-[#007BFF] border-gray-300 rounded focus:ring-[#007BFF]"
                 required
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">
-                I agree to the{' '}
-                <Link to="/terms" className="text-[#007BFF] hover:text-[#0056b3]">
+                I agree to the{" "}
+                <Link
+                  to="/terms"
+                  className="text-[#007BFF] hover:text-[#0056b3]"
+                >
                   Terms of Service
-                </Link>{' '}
-                and{' '}
-                <Link to="/privacy" className="text-[#007BFF] hover:text-[#0056b3]">
+                </Link>{" "}
+                and{" "}
+                <Link
+                  to="/privacy"
+                  className="text-[#007BFF] hover:text-[#0056b3]"
+                >
                   Privacy Policy
                 </Link>
               </span>
             </label>
 
-            <Button type="submit" size="lg" fullWidth>
-              {t.auth.registerButton}
+            <Button type="submit" size="lg" fullWidth disabled={isSubmitting}>
+              {isSubmitting ? "Creating account..." : t.auth.registerButton}
             </Button>
 
             <div className="relative my-6">
@@ -239,7 +313,7 @@ export function Register() {
             </Button>
 
             <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-              {t.auth.hasAccount}{' '}
+              {t.auth.hasAccount}{" "}
               <Link
                 to="/login"
                 className="text-[#007BFF] hover:text-[#0056b3] font-semibold transition-colors duration-200"

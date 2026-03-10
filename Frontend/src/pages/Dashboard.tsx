@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import {
   Package,
   Bell,
@@ -11,49 +11,58 @@ import {
   Heart,
   BarChart3,
   Upload,
-} from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
-import { Card } from '../components/Card';
-import { Button } from '../components/Button';
+} from "lucide-react";
+import { useLanguage } from "../contexts/LanguageContext";
+import { Card } from "../components/Card";
+import { Button } from "../components/Button";
+import { useAuth } from "../contexts/AuthContext";
 
 export function Dashboard() {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [userType] = useState<'customer' | 'pharmacy'>('customer');
+  const { user, logout } = useAuth();
+  const [userType] = useState<"customer" | "pharmacy">(
+    user?.role === "pharmacy_owner" ? "pharmacy" : "customer",
+  );
 
-  const handleLogout = () => {
-    navigate('/');
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
   };
 
   const recentSearches = [
-    'Paracetamol 500mg',
-    'Insulin Glargine',
-    'Omeprazole 20mg',
+    "Paracetamol 500mg",
+    "Insulin Glargine",
+    "Omeprazole 20mg",
   ];
 
   const orders = [
     {
-      id: '#12345',
-      medication: 'Paracetamol 500mg',
-      pharmacy: 'Pharmacie Centrale',
-      status: 'Delivered',
-      date: '2026-02-15',
+      id: "#12345",
+      medication: "Paracetamol 500mg",
+      pharmacy: "Pharmacie Centrale",
+      status: "Delivered",
+      date: "2026-02-15",
       price: 3.5,
     },
     {
-      id: '#12344',
-      medication: 'Insulin Glargine',
-      pharmacy: 'Pharmacie du Lac',
-      status: 'In Transit',
-      date: '2026-02-18',
+      id: "#12344",
+      medication: "Insulin Glargine",
+      pharmacy: "Pharmacie du Lac",
+      status: "In Transit",
+      date: "2026-02-18",
       price: 45.0,
     },
     {
-      id: '#12343',
-      medication: 'Amoxicillin 500mg',
-      pharmacy: 'Pharmacie de la Médina',
-      status: 'Processing',
-      date: '2026-02-18',
+      id: "#12343",
+      medication: "Amoxicillin 500mg",
+      pharmacy: "Pharmacie de la Médina",
+      status: "Processing",
+      date: "2026-02-18",
       price: 12.0,
     },
   ];
@@ -61,32 +70,72 @@ export function Dashboard() {
   const notifications = [
     {
       id: 1,
-      title: 'Order Delivered',
-      message: 'Your order #12345 has been delivered',
-      time: '2 hours ago',
+      title: "Order Delivered",
+      message: "Your order #12345 has been delivered",
+      time: "2 hours ago",
       read: false,
     },
     {
       id: 2,
-      title: 'Price Drop Alert',
-      message: 'Paracetamol is now 10% cheaper at Pharmacie Centrale',
-      time: '1 day ago',
+      title: "Price Drop Alert",
+      message: "Paracetamol is now 10% cheaper at Pharmacie Centrale",
+      time: "1 day ago",
       read: true,
     },
   ];
 
   const stats = [
-    { icon: ShoppingBag, label: 'Total Orders', value: '23', color: 'text-[#007BFF]' },
-    { icon: Heart, label: 'Saved Medications', value: '8', color: 'text-red-500' },
-    { icon: TrendingUp, label: 'Loyalty Points', value: '450', color: 'text-[#28A745]' },
-    { icon: Package, label: 'Active Orders', value: '2', color: 'text-[#FFC107]' },
+    {
+      icon: ShoppingBag,
+      label: "Total Orders",
+      value: "23",
+      color: "text-[#007BFF]",
+    },
+    {
+      icon: Heart,
+      label: "Saved Medications",
+      value: "8",
+      color: "text-red-500",
+    },
+    {
+      icon: TrendingUp,
+      label: "Loyalty Points",
+      value: "450",
+      color: "text-[#28A745]",
+    },
+    {
+      icon: Package,
+      label: "Active Orders",
+      value: "2",
+      color: "text-[#FFC107]",
+    },
   ];
 
   const pharmacyStats = [
-    { icon: ShoppingBag, label: 'Total Sales', value: '2,450 TND', color: 'text-[#007BFF]' },
-    { icon: Package, label: 'Orders Today', value: '34', color: 'text-[#28A745]' },
-    { icon: BarChart3, label: 'Items in Stock', value: '567', color: 'text-[#FFC107]' },
-    { icon: TrendingUp, label: 'Growth', value: '+15%', color: 'text-[#17A2B8]' },
+    {
+      icon: ShoppingBag,
+      label: "Total Sales",
+      value: "2,450 TND",
+      color: "text-[#007BFF]",
+    },
+    {
+      icon: Package,
+      label: "Orders Today",
+      value: "34",
+      color: "text-[#28A745]",
+    },
+    {
+      icon: BarChart3,
+      label: "Items in Stock",
+      value: "567",
+      color: "text-[#FFC107]",
+    },
+    {
+      icon: TrendingUp,
+      label: "Growth",
+      value: "+15%",
+      color: "text-[#17A2B8]",
+    },
   ];
 
   return (
@@ -95,10 +144,12 @@ export function Dashboard() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              {t.dashboard.welcome}, User!
+              {t.dashboard.welcome}, {user.name}!
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              {userType === 'customer' ? 'Manage your medications and orders' : 'Manage your pharmacy operations'}
+              {userType === "customer"
+                ? "Manage your medications and orders"
+                : "Manage your pharmacy operations"}
             </p>
           </div>
 
@@ -113,28 +164,32 @@ export function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {(userType === 'customer' ? stats : pharmacyStats).map((stat, index) => (
-            <Card key={index}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                    {stat.label}
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {stat.value}
-                  </p>
+          {(userType === "customer" ? stats : pharmacyStats).map(
+            (stat, index) => (
+              <Card key={index}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                      {stat.label}
+                    </p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {stat.value}
+                    </p>
+                  </div>
+                  <div
+                    className={`p-3 rounded-lg bg-gray-100 dark:bg-gray-700 ${stat.color}`}
+                  >
+                    <stat.icon className="h-6 w-6" />
+                  </div>
                 </div>
-                <div className={`p-3 rounded-lg bg-gray-100 dark:bg-gray-700 ${stat.color}`}>
-                  <stat.icon className="h-6 w-6" />
-                </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            ),
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            {userType === 'customer' ? (
+            {userType === "customer" ? (
               <>
                 <Card>
                   <div className="flex items-center justify-between mb-4">
@@ -159,11 +214,11 @@ export function Dashboard() {
                             </span>
                             <span
                               className={`text-xs font-semibold px-2 py-0.5 rounded ${
-                                order.status === 'Delivered'
-                                  ? 'bg-[#28A745] text-white'
-                                  : order.status === 'In Transit'
-                                  ? 'bg-[#007BFF] text-white'
-                                  : 'bg-[#FFC107] text-gray-900'
+                                order.status === "Delivered"
+                                  ? "bg-[#28A745] text-white"
+                                  : order.status === "In Transit"
+                                    ? "bg-[#007BFF] text-white"
+                                    : "bg-[#FFC107] text-gray-900"
                               }`}
                             >
                               {order.status}
@@ -212,7 +267,10 @@ export function Dashboard() {
                     {t.dashboard.inventory}
                   </h2>
                   <div className="space-y-4">
-                    <Button fullWidth className="flex items-center justify-center gap-2">
+                    <Button
+                      fullWidth
+                      className="flex items-center justify-center gap-2"
+                    >
                       <Upload className="h-5 w-5" />
                       Upload Stock Update
                     </Button>
@@ -230,7 +288,9 @@ export function Dashboard() {
                     {t.dashboard.analytics}
                   </h2>
                   <div className="h-64 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
-                    <p className="text-gray-500 dark:text-gray-500">Sales Analytics Chart</p>
+                    <p className="text-gray-500 dark:text-gray-500">
+                      Sales Analytics Chart
+                    </p>
                   </div>
                 </Card>
               </>
@@ -252,8 +312,8 @@ export function Dashboard() {
                     key={notification.id}
                     className={`p-3 rounded-lg ${
                       notification.read
-                        ? 'bg-gray-50 dark:bg-gray-800'
-                        : 'bg-[#007BFF]/10 dark:bg-[#007BFF]/20'
+                        ? "bg-gray-50 dark:bg-gray-800"
+                        : "bg-[#007BFF]/10 dark:bg-[#007BFF]/20"
                     }`}
                   >
                     <p className="font-semibold text-sm text-gray-900 dark:text-white mb-1">
@@ -290,7 +350,7 @@ export function Dashboard() {
                   </span>
                 </button>
 
-                {userType === 'customer' && (
+                {userType === "customer" && (
                   <button className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 text-left">
                     <Heart className="h-5 w-5 text-gray-400" />
                     <span className="text-sm text-gray-700 dark:text-gray-300">
